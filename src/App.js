@@ -1,59 +1,66 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import CadastroProduto from './CadastroProdutos';
-import Produtos from './Produtos'; // Renomeado para ListaProdutos para clareza
-import './App.css'; // Estilos específicos do App
+import EscolherCadastro from './EscolherCadastro';
+import CadastroProdutos from './CadastroProdutos';
+import CadastroItensAvulsos from './CadastroItensAvulsos';
+import CardsGenerico from './CardsGenerico'; // <-- Usar apenas este
 
 function App() {
+  const [tipoSelecionado, setTipoSelecionado] = useState('produto'); // 'produto' ou 'item'
   const [produtos, setProdutos] = useState([]);
-  const [error, setError] = useState(null);
+  const [itensAvulsos, setItensAvulsos] = useState([]);
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  // Função para buscar os produtos, passada para o componente Produtos
-  const fetchProdutos = useCallback(async () => {
-  setError(null);
-  try {
-    const response = await axios.get(`${apiUrl}/produtos`);
-    setProdutos(response.data.produtos || []); // <-- CORREÇÃO AQUI
-  } catch (error) {
-    console.error("Erro ao buscar produtos:", error);
-    setError("Não foi possível carregar os produtos.");
-  }
-}, [apiUrl]);
+  // GET Produtos
+  const fetchProdutos = async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/produtos`);
+      setProdutos(res.data.produtos || res.data || []);
+    } catch (err) {
+      console.error("Erro ao buscar produtos:", err);
+    }
+  };
 
+  // GET Itens Avulsos
+  const fetchItensAvulsos = async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/itens-avulsos`);
+      setItensAvulsos(res.data.itens || res.data || []);
+    } catch (err) {
+      console.error("Erro ao buscar itens avulsos:", err);
+    }
+  };
 
-  // Busca os produtos assim que a aplicação carrega
   useEffect(() => {
     fetchProdutos();
-  }, [fetchProdutos]);
-
-  // Adiciona um novo produto à lista sem recarregar a página
-  const handleProdutoCadastrado = (novoProduto) => {
-    setProdutos(estadoAnterior => [...estadoAnterior, novoProduto]);
-  };
-
-  // Remove um produto da lista
-  const handleProdutoApagado = (idProdutoApagado) => {
-    setProdutos(estadoAnterior => estadoAnterior.filter(p => p.id !== idProdutoApagado));
-  };
-
-  // Atualiza um produto na lista
-  const handleProdutoAtualizado = (produtoAtualizado) => {
-    setProdutos(estadoAnterior => 
-      estadoAnterior.map(p => p.id === produtoAtualizado.id ? produtoAtualizado : p)
-    );
-  };
+    fetchItensAvulsos();
+  }, []);
 
   return (
     <div className="container">
-      <CadastroProduto onProdutoCadastrado={handleProdutoCadastrado} />
-      <hr style={{margin: '40px 0', border: '1px solid #eee'}} />
-      {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-      <Produtos 
-        produtos={produtos} 
-        onProdutoApagado={handleProdutoApagado}
-        onProdutoAtualizado={handleProdutoAtualizado}
-      />
+      <EscolherCadastro tipo={tipoSelecionado} setTipo={setTipoSelecionado} />
+
+      {tipoSelecionado === 'produto' ? (
+        <CadastroProdutos onProdutoCadastrado={(novo) => setProdutos([...produtos, novo])} />
+      ) : (
+        <CadastroItensAvulsos onItemCadastrado={(novo) => setItensAvulsos([...itensAvulsos, novo])} />
+      )}
+
+      <hr style={{ margin: '40px 0', border: '1px solid #eee' }} />
+
+      {tipoSelecionado === 'produto' ? (
+        <CardsGenerico
+          itens={produtos}
+          tipo="produtos"
+          atualizarLista={fetchProdutos}
+        />
+      ) : (
+        <CardsGenerico
+          itens={itensAvulsos}
+          tipo="itens-avulsos"
+          atualizarLista={fetchItensAvulsos}
+        />
+      )}
     </div>
   );
 }
