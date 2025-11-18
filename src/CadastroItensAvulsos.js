@@ -4,13 +4,9 @@ import axios from 'axios';
 function CadastroItensAvulsos({ onItemCadastrado }) {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [tags, setTags] = useState([]);
+  const [tags, setTags] = useState('');
   const [todasTags, setTodasTags] = useState([]);
-  const [imagem, setImagem] = useState(null);
-
-  // 🔹 variáveis não usadas renomeadas com _ para evitar warning
-  const [_modal, _setModal] = useState(false);
-  const [_novaTag, _setNovaTag] = useState('');
+  const [imagem, setImagem] = useState(null); // 🔑 imagem ativada!
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -25,8 +21,7 @@ function CadastroItensAvulsos({ onItemCadastrado }) {
       }
     };
     fetchTags();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 🔥 evita warning de dependências do CI
+  }, [apiUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,10 +29,8 @@ function CadastroItensAvulsos({ onItemCadastrado }) {
     const fd = new FormData();
     fd.append("nome", nome);
     fd.append("descricao", descricao);
-    fd.append("tags", tags.join(",")); // transforma em string
-    if (imagem) fd.append("imagem_url", imagem); // 🔥 nome igual ao backend
-
-    console.log("IMAGEM ENVIADA:", fd.get("imagem_url")); // TESTE
+    fd.append("tags", tags); // agora é string igual ao produto
+    if (imagem) fd.append("imagem_url", imagem); // 🔑 nome exato do multer
 
     try {
       const res = await axios.post(`${apiUrl}/itens-avulsos`, fd, {
@@ -46,9 +39,10 @@ function CadastroItensAvulsos({ onItemCadastrado }) {
 
       onItemCadastrado(res.data);
 
+      // Resetar formulário
       setNome('');
       setDescricao('');
-      setTags([]);
+      setTags('');
       setImagem(null);
     } catch (err) {
       console.error("Erro ao cadastrar item:", err);
@@ -59,45 +53,30 @@ function CadastroItensAvulsos({ onItemCadastrado }) {
   return (
     <div>
       <h2>Cadastrar Item Avulso</h2>
-
       <form onSubmit={handleSubmit}>
         <input
           type="text"
           placeholder="Nome"
           value={nome}
-          onChange={(e) => setNome(e.target.value)}
+          onChange={e => setNome(e.target.value)}
           required
         />
 
         <textarea
           placeholder="Descrição"
           value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
+          onChange={e => setDescricao(e.target.value)}
         />
 
-        <select
-          multiple
-          value={tags}
-          onChange={(e) => {
-            const selected = Array.from(e.target.selectedOptions, (option) => option.value);
-            setTags(selected);
-          }}
-        >
-          {todasTags.map((t, i) => (
-            <option key={i} value={t}>
-              {t}
-            </option>
-          ))}
+        <select value={tags} onChange={e => setTags(e.target.value)}>
+          <option value="">Selecione uma tag</option>
+          {todasTags.map((t, i) => <option key={i} value={t}>{t}</option>)}
         </select>
 
-        <button type="button" onClick={() => _setModal(true)}>
-          + Nova Tag
-        </button>
-
+        {/* 🔑 campo file */}
         <input
           type="file"
-          name="imagem_url" // 🔥 AGORA O MULTER ACEITA
-          onChange={(e) => setImagem(e.target.files[0])}
+          onChange={e => setImagem(e.target.files[0])}
           accept="image/*"
         />
 
