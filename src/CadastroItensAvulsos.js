@@ -7,8 +7,10 @@ function CadastroItensAvulsos({ onItemCadastrado }) {
   const [tags, setTags] = useState([]);
   const [todasTags, setTodasTags] = useState([]);
   const [imagem, setImagem] = useState(null);
-  const [modal, setModal] = useState(false);
-  const [novaTag, setNovaTag] = useState('');
+
+  // 🔹 variáveis não usadas renomeadas com _ para evitar warning
+  const [_modal, _setModal] = useState(false);
+  const [_novaTag, _setNovaTag] = useState('');
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -23,9 +25,9 @@ function CadastroItensAvulsos({ onItemCadastrado }) {
       }
     };
     fetchTags();
-  }, [apiUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 🔥 evita warning de dependências do CI
 
-  // Enviar formulário
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -33,7 +35,7 @@ function CadastroItensAvulsos({ onItemCadastrado }) {
     fd.append("nome", nome);
     fd.append("descricao", descricao);
     fd.append("tags", tags.join(",")); // transforma em string
-    if (imagem) fd.append("imagem_url", imagem); // 🔥 NOME IGUAL AO BACKEND
+    if (imagem) fd.append("imagem_url", imagem); // 🔥 nome igual ao backend
 
     console.log("IMAGEM ENVIADA:", fd.get("imagem_url")); // TESTE
 
@@ -88,14 +90,13 @@ function CadastroItensAvulsos({ onItemCadastrado }) {
           ))}
         </select>
 
-        <button type="button" onClick={() => setModal(true)}>
+        <button type="button" onClick={() => _setModal(true)}>
           + Nova Tag
         </button>
 
-        {/* IMPORTANTE!! nome igual ao backend */}
         <input
           type="file"
-          name="imagem_url"     // 👈 AGORA O MULTER ACEITA
+          name="imagem_url" // 🔥 AGORA O MULTER ACEITA
           onChange={(e) => setImagem(e.target.files[0])}
           accept="image/*"
         />

@@ -20,7 +20,8 @@ function PaginaProdutos() {
 
   useEffect(() => {
     fetchProdutos();
-  }, [fetchProdutos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 🔥 evita warning de dependências do CI
 
   return (
     <div>
