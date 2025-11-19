@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import axios from "axios";
-import './App.css';
+import "./App.css";
 
 function CardsGenerico({ itens, tipo, atualizarLista }) {
   const [itemEdit, setItemEdit] = useState(null);
   const [modal, setModal] = useState(false);
+
+  // 🔥 AGORA CADA ITEM TEM SEU INDICE PROPRIO!
+  const [fotoIndex, setFotoIndex] = useState({}); // { idDoItem: index }
+
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const handleDelete = async (id) => {
@@ -17,14 +21,14 @@ function CardsGenerico({ itens, tipo, atualizarLista }) {
     }
   };
 
-  // 🔥 AGORA O PUT ENVIA IMAGEM E TEXTO CORRETAMENTE
   const handleSave = async () => {
     try {
       const formData = new FormData();
       formData.append("nome", itemEdit.nome);
       formData.append("descricao", itemEdit.descricao);
       formData.append("tags", itemEdit.tags);
-      formData.append("categoria", itemEdit.categoria || ""); // se tiver
+      formData.append("categoria", itemEdit.categoria || "");
+
       if (itemEdit.imagem_url instanceof File) {
         formData.append("imagem_url", itemEdit.imagem_url);
       }
@@ -50,10 +54,57 @@ function CardsGenerico({ itens, tipo, atualizarLista }) {
       <div className="lista-container">
         {itens.map((i) => (
           <div key={i.id} className="produto-card">
-            {i.imagem_url && <img src={i.imagem_url} alt={i.nome} />}
+
+            {/* 🔥 GALERIA DE FOTOS SOMENTE PARA PRODUTOS */}
+            {tipo === "produtos" ? (
+              i.galeria && i.galeria.length > 0 && (
+                <div className="imagem-container">
+                  <img
+                    src={i.galeria[fotoIndex[i.id] || 0]} // ← índice individual
+                    alt={i.nome}
+                  />
+
+                  {/* Se tiver mais de 1 imagem = mostra setas */}
+                  {i.galeria.length > 1 && (
+                    <div className="setas">
+
+                      {/* ⬅️ VOLTAR FOTO */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFotoIndex((prev) => ({
+                            ...prev,
+                            [i.id]: prev[i.id] === 0 ? i.galeria.length - 1 : (prev[i.id] || 0) - 1
+                          }));
+                        }}
+                      >
+                        ⬅️
+                      </button>
+
+                      {/* ➡️ AVANÇAR FOTO */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFotoIndex((prev) => ({
+                            ...prev,
+                            [i.id]: (prev[i.id] || 0) === i.galeria.length - 1 ? 0 : (prev[i.id] || 0) + 1
+                          }));
+                        }}
+                      >
+                        ➡️
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            ) : (
+              i.imagem_url && <img src={i.imagem_url} alt={i.nome} />
+            )}
+
             <h3>{i.nome}</h3>
             <p>{i.descricao}</p>
             <span>Tags: {Array.isArray(i.tags) ? i.tags.join(", ") : i.tags}</span>
+
             <div className="botoes-acao">
               <button onClick={() => { setItemEdit(i); setModal(true); }}>Editar</button>
               <button onClick={() => handleDelete(i.id)}>Deletar</button>
@@ -83,7 +134,6 @@ function CardsGenerico({ itens, tipo, atualizarLista }) {
               placeholder="Tags (vírgula)"
             />
 
-            {/* 🔥 CAMPO PARA MUDAR A IMAGEM */}
             <input
               type="file"
               onChange={(e) => setItemEdit({ ...itemEdit, imagem_url: e.target.files[0] })}

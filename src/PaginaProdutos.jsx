@@ -5,7 +5,7 @@ import Produtos from './Produtos';
 
 function PaginaProdutos() {
   const [produtos, setProdutos] = useState([]);
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const fetchProdutos = useCallback(async () => {
